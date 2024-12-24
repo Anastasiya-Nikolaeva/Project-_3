@@ -28,49 +28,62 @@ def main():
     # Заполнение базы данных
     for employer in employers:
         # Вставка компании
-        company_id = db_handler.insert_company(employer['name'], employer['hh_id'])
+        company_id = db_handler.insert_company(employer["name"], employer["hh_id"])
         if company_id is None:
             print(f"Failed to insert company: {employer['name']}")
             continue  # Пропустить, если кодировка неверная или компания уже существует
 
         # Получаем вакансии для текущего работодателя
-        vacancies = hh_api.get_vacancies_by_employer(employer['hh_id'])
+        vacancies = hh_api.get_vacancies_by_employer(employer["hh_id"])
 
         for vacancy in vacancies:
             if vacancy is None:
                 continue
 
             # Получаем информацию о зарплате
-            salary_info = vacancy.get('salary')
-            salary = salary_info.get('from') if salary_info else None  # Получаем зарплату, если она указана
+            salary_info = vacancy.get("salary")
+            salary = (
+                salary_info.get("from") if salary_info else None
+            )  # Получаем зарплату, если она указана
 
             # Вставка вакансии в базу данных
-            vacancy_id = db_handler.insert_vacancy(vacancy['name'], vacancy.get('description', ''),
-                                                    vacancy.get('url', ''), company_id, salary)
+            vacancy_id = db_handler.insert_vacancy(
+                vacancy["name"],
+                vacancy.get("description", ""),
+                vacancy.get("url", ""),
+                company_id,
+                salary,
+            )
             if vacancy_id is None:
-                print(f"Failed to insert vacancy: {vacancy['name']} for company id: {company_id}")
+                print(
+                    f"Failed to insert vacancy: {vacancy['name']} for company id: {company_id}"
+                )
 
     # Сохраняем изменения в базе данных
     db_handler.connection.commit()
 
     # Примеры использования методов DBManager
     print("Количество вакансий у каждой компании:")
-    db_handler.cursor.execute("""
-        SELECT e.name, COUNT(v.id) 
-        FROM employers e 
-        LEFT JOIN vacancies v ON e.id = v.employer_id 
+    db_handler.cursor.execute(
+        """
+        SELECT e.name, COUNT(v.id)
+        FROM employers e
+        LEFT JOIN vacancies v ON e.id = v.employer_id
         GROUP BY e.id;
-    """)
+    """
+    )
     companies_and_vacancies_count = db_handler.cursor.fetchall()
     for company, count in companies_and_vacancies_count:
         print(f"{company}: {count} вакансий")
 
     print("\nВсе вакансии:")
-    db_handler.cursor.execute("""
-        SELECT v.title, v.salary, e.name 
-        FROM vacancies v 
+    db_handler.cursor.execute(
+        """
+        SELECT v.title, v.salary, e.name
+        FROM vacancies v
         JOIN employers e ON v.employer_id = e.id;
-    """)
+    """
+    )
     all_vacancies = db_handler.cursor.fetchall()
     for title, salary, company in all_vacancies:
         print(f"Вакансия: {title}, Зарплата: {salary}, Компания: {company}")

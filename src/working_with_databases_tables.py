@@ -1,6 +1,8 @@
 import os
-from dotenv import load_dotenv
+from typing import Optional
+
 import psycopg2
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -9,11 +11,11 @@ class DatabaseHandler:
     """Отвечает за создание БД и таблиц"""
 
     def __init__(self):
-        self.db_name = 'project_db'
-        self.user = os.getenv('DB_USER')
-        self.password = os.getenv('DB_PASSWORD')
-        self.host = os.getenv('DB_HOST')
-        self.port = os.getenv('DB_PORT')
+        self.db_name = "project_db"
+        self.user = os.getenv("DB_USER")
+        self.password = os.getenv("DB_PASSWORD")
+        self.host = os.getenv("DB_HOST")
+        self.port = os.getenv("DB_PORT")
         self.connection = None
         self.cursor = None
 
@@ -31,7 +33,7 @@ class DatabaseHandler:
                 user=self.user,
                 password=self.password,
                 host=self.host,
-                port=self.port
+                port=self.port,
             )
             self.cursor = self.connection.cursor()
             print("Connection successful")
@@ -45,14 +47,13 @@ class DatabaseHandler:
     def create_database(self):
         """Создает базу данных, если она не существует."""
         conn = psycopg2.connect(
-            user=self.user,
-            password=self.password,
-            host=self.host,
-            port=self.port
+            user=self.user, password=self.password, host=self.host, port=self.port
         )
         conn.autocommit = True
         cursor = conn.cursor()
-        cursor.execute(f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{self.db_name}'")
+        cursor.execute(
+            f"SELECT 1 FROM pg_catalog.pg_database WHERE datname = '{self.db_name}'"
+        )
         exists = cursor.fetchone()
         if not exists:
             cursor.execute(f"CREATE DATABASE {self.db_name}")
@@ -102,19 +103,28 @@ class DatabaseHandler:
         existing_company = self.cursor.fetchone()
 
         if existing_company:
-            print(f"Company with hh_id {hh_id} already exists. Returning id {existing_company[0]}.")
+            print(
+                f"Company with hh_id {hh_id} already exists. Returning id {existing_company[0]}."
+            )
             return existing_company[0]  # Возвращаем id существующей записи
 
         # Вставка нового работодателя
         self.cursor.execute(
             "INSERT INTO employers (name, hh_id) VALUES (%s, %s) RETURNING id;",
-            (name, hh_id)
+            (name, hh_id),
         )
         new_company_id = self.cursor.fetchone()[0]
         print(f"Inserted new company {name} with id {new_company_id}.")
         return new_company_id
 
-    def insert_vacancy(self, title: str, description: str, url: str, employer_id: int, salary: float = None):
+    def insert_vacancy(
+        self,
+        title: str,
+        description: str,
+        url: str,
+        employer_id: int,
+        salary: Optional[float] = None,
+    ):
         """Вставляет вакансию в таблицу."""
         if not self.check_encoding(title):
             print(f"Invalid encoding for vacancy title: {title}")
@@ -140,7 +150,7 @@ class DatabaseHandler:
         self.cursor.execute(
             "INSERT INTO vacancies (title, description, url, employer_id, salary) "
             "VALUES (%s, %s, %s, %s, %s) RETURNING id;",
-            (title, description, url, employer_id, salary)  # Добавляем salary в запрос
+            (title, description, url, employer_id, salary),  # Добавляем salary в запрос
         )
         return self.cursor.fetchone()[0]
 
@@ -160,7 +170,7 @@ class DatabaseHandler:
             return False
         try:
             # Попробуйте декодировать строку в UTF-8
-            data.encode('utf-8').decode('utf-8')
+            data.encode("utf-8").decode("utf-8")
             return True
         except UnicodeDecodeError as e:
             print(f"Encoding error: {e}")

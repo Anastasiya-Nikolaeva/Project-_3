@@ -1,9 +1,11 @@
-import requests
 from typing import Any, Dict, List
+
+import requests
 
 
 class HeadHunter:
     """Класс для работы с API HeadHunter"""
+
     def __init__(self) -> None:
         self._url: str = "https://api.hh.ru/vacancies"
         self._headers: Dict[str, str] = {"User-Agent": "HH-User-Agent"}
@@ -32,7 +34,7 @@ class HeadHunter:
         """Получает вакансии для указанной компании."""
         response = requests.get(f"{self._url}/vacancies?employer_id={company_id}")
         if response.status_code == 200:
-            return response.json().get('items', [])
+            return response.json().get("items", [])
         return []
 
     @staticmethod
@@ -40,8 +42,12 @@ class HeadHunter:
         response = requests.get(f"https://api.hh.ru/vacancies?employer_id={hh_id}")
         if response.status_code == 200:
             data = response.json()
-            print(f"Vacancies for employer ID {hh_id}: {data.get('items', [])}")  # Отладочный вывод
-            return data.get('items', [])
+            print(
+                f"Vacancies for employer ID {hh_id}: {data.get('items', [])}"
+            )  # Отладочный вывод
+            return data.get("items", [])
         else:
-            print(f"Error fetching vacancies for employer ID {hh_id}: {response.status_code}")
+            print(
+                f"Error fetching vacancies for employer ID {hh_id}: {response.status_code}"
+            )
             return None
