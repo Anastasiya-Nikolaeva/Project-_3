@@ -20,26 +20,26 @@ class DBManager:
         self.host = os.getenv("DB_HOST")
         self.port = os.getenv("DB_PORT")
 
-    def get_companies_and_vacancies_count(self):
-        """Получает список всех компаний и количество вакансий у каждой компании."""
+    def get_employers_and_vacancies_count(self):
+        """Получает список всех работодателей и количество вакансий у каждого работодателя."""
         self.db_handler.cursor.execute(
             """
-            SELECT c.name, COUNT(v.id)
-            FROM companies c
-            LEFT JOIN vacancies v ON c.id = v.company_id
-            GROUP BY c.id;
-        """
+            SELECT e.name, COUNT(v.id)
+            FROM employers e
+            LEFT JOIN vacancies v ON e.id = v.employer_id
+            GROUP BY e.id;
+            """
         )
         return self.db_handler.cursor.fetchall()
 
     def get_all_vacancies(self):
-        """Получает список всех вакансий с указанием названия компании, названия вакансии и зарплаты."""
+        """Получает список всех вакансий с указанием названия работодателя, названия вакансии и зарплаты."""
         self.db_handler.cursor.execute(
             """
-            SELECT v.title, v.salary, c.name
+            SELECT v.title, v.salary, e.name
             FROM vacancies v
-            JOIN companies c ON v.company_id = c.id;
-        """
+            JOIN employers e ON v.employer_id = e.id;
+            """
         )
         return self.db_handler.cursor.fetchall()
 
@@ -55,11 +55,11 @@ class DBManager:
         avg_salary = self.get_avg_salary()
         self.db_handler.cursor.execute(
             """
-            SELECT v.title, v.salary, c.name
+            SELECT v.title, v.salary, e.name
             FROM vacancies v
-            JOIN companies c ON v.company_id = c.id
+            JOIN employers e ON v.employer_id = e.id
             WHERE v.salary > %s;
-        """,
+            """,
             (avg_salary,),
         )
         return self.db_handler.cursor.fetchall()
@@ -68,11 +68,11 @@ class DBManager:
         """Получает список всех вакансий, в названии которых содержатся переданные в метод слова."""
         self.db_handler.cursor.execute(
             """
-            SELECT v.title, v.salary, c.name
+            SELECT v.title, v.salary, e.name
             FROM vacancies v
-            JOIN companies c ON v.company_id = c.id
+            JOIN employers e ON v.employer_id = e.id
             WHERE v.title ILIKE %s;
-        """,
+            """,
             (f"%{keyword}%",),
         )
         return self.db_handler.cursor.fetchall()
